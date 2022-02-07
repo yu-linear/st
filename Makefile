@@ -6,8 +6,9 @@ include config.mk
 
 SRC = st.c x.c
 OBJ = $(SRC:.c=.o)
+PATCHES = $(wildcard patches/*.diff)
 
-all: options st
+all: patch options st
 
 options:
 	@echo st build options:
@@ -29,8 +30,14 @@ $(OBJ): config.h config.mk
 st: $(OBJ)
 	$(CC) -o $@ $(OBJ) $(STLDFLAGS)
 
+patch:
+	@echo Applying following patches:
+	@ls patches
+	patch --forward < "${PATCHES}"
+
 clean:
-	rm -f st $(OBJ) st-$(VERSION).tar.gz
+	rm -f st $(OBJ) st-$(VERSION).tar.gz config.h
+	patch --forward -R < "${PATCHES}"
 
 dist: clean
 	mkdir -p st-$(VERSION)
@@ -40,7 +47,7 @@ dist: clean
 	tar -cf - st-$(VERSION) | gzip > st-$(VERSION).tar.gz
 	rm -rf st-$(VERSION)
 
-install: st
+install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f st $(DESTDIR)$(PREFIX)/bin
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/st
